@@ -1,22 +1,108 @@
+import type { NextPage } from 'next'
 import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from '@/styles/Home.module.css'
+import { FiGlobe } from 'react-icons/fi'
+import { SupportedLocale, SUPPORTED_LOCALES, SwapWidget } from '@uniswap/widgets'
 
-const inter = Inter({ subsets: ['latin'] })
+// ↓↓↓ Don't forget to import the widgets' fonts! ↓↓↓
+import '@uniswap/widgets/fonts.css'
+// ↑↑↑
 
-export default function Home() {
+import styles from '../styles/Home.module.css'
+import DocumentationCards from '../components/DocumentationCards'
+import Web3Connectors from '../components/Web3Connectors'
+import { useActiveProvider } from '../connectors'
+import { useCallback, useRef, useState } from 'react'
+import { JSON_RPC_URL } from '../constants'
+
+
+
+// const TOKEN_LIST = 'https://gateway.ipfs.io/ipns/tokens.uniswap.org'
+
+const TOKEN_LIST = [
+    {
+      "name": "DummyToken",
+      "address": "0xEb4B93CecB2afA542485Bc8d42B58F2e7A706E8e",
+      "symbol": "DUMY",
+      "decimals": 18,
+      "chainId": 5,
+      "logoURI": "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg"
+    },
+    {
+      "name": "DummyToken",
+      "address": "0xEb4B93CecB2afA542485Bc8d42B58F2e7A706E8e",
+      "symbol": "DUMY",
+      "decimals": 18,
+      "chainId": 5,
+      "logoURI": "ipfs://QmXttGpZrECX5qCyXbBQiqgQNytVGeZW5Anewvh2jc4psg"
+    },
+  ];
+
+const UNI = '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984'
+
+const Home: NextPage = () => {
+  // When a user clicks "Connect your wallet" in the SwapWidget, this callback focuses the connectors.
+  console.log('TOKEN_LIST', TOKEN_LIST);
+  const connectors = useRef<HTMLDivElement>(null)
+  const focusConnectors = useCallback(() => connectors.current?.focus(), [])
+
+  // The provider to pass to the SwapWidget.
+  // This is a Web3Provider (from @ethersproject) supplied by @web3-react; see ./connectors.ts.
+  const provider = useActiveProvider()
+
+  // The locale to pass to the SwapWidget.
+  // This is a value from the SUPPORTED_LOCALES exported by @uniswap/widgets.
+  const [locale, setLocale] = useState<SupportedLocale>('en-US')
+  const onSelectLocale = useCallback((e) => setLocale(e.target.value), [])
+
   return (
-    <>
-      <div className="px-4 py-5 my-5 text-center">
-        <h1 className="display-5 fw-bold">PrivateSwap</h1>
-        <div className="col-lg-6 mx-auto">
-          <p className="lead mb-4">Quickly swap with privacy and confidence. Swap on the same chain or cross chains the choice is yours. Using cutting edge ERC-4337 to optimize swaps for gas efficiency and provide the privacy that everyone not only needs but deserves. </p>
-          <div className="d-grid gap-2 d-sm-flex justify-content-sm-center">
-            <button type="button" className="btn btn-primary btn-lg px-4 gap-3">Click Here to Begin</button>
+    <div className={styles.container}>
+      <Head>
+        <title>Uniswap Widgets</title>
+        <meta name="description" content="Uniswap Widgets" />
+        <link rel="icon" href="https://app.uniswap.org/favicon.png" />
+      </Head>
+
+      <div className={styles.i18n}>
+        <label style={{ display: 'flex' }}>
+          <FiGlobe />
+        </label>
+        <select onChange={onSelectLocale}>
+          {SUPPORTED_LOCALES.map((locale) => (
+            <option key={locale} value={locale}>
+              {locale}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <main className={styles.main}>
+        <h1 className={styles.title}>Uniswap Swap Widget</h1>
+
+        <div className={styles.demo}>
+          <div className={styles.connectors} ref={connectors} tabIndex={-1}>
+            <Web3Connectors />
+          </div>
+
+          <div className={styles.widget}>
+            <SwapWidget
+              jsonRpcEndpoint={JSON_RPC_URL}
+              tokenList={TOKEN_LIST}
+              provider={provider}
+              locale={locale}
+              onConnectWallet={focusConnectors}
+              defaultInputTokenAddress="NATIVE"
+              defaultInputAmount="1"
+              defaultOutputTokenAddress={UNI}
+            />
           </div>
         </div>
-      </div>
-    </>
+
+        <hr className={styles.rule} />
+
+        <DocumentationCards />
+      </main>
+    </div>
   )
 }
+
+export default Home
